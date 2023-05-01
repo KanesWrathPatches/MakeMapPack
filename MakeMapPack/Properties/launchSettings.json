@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "MakeMapPack": {
+      "commandName": "Project"
+    },
+    "Profile 1": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Jana\\AppData\\Roaming\\Command & Conquer 3 Tiberium Wars\\maps\""
+    }
+  }
+}
