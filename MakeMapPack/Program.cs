@@ -65,15 +65,7 @@ foreach (string map in Directory.EnumerateDirectories(path))
     Console.WriteLine($"Building and applying leafmod to {id}");
     string outDirMap = Path.Combine(outDirMaps, id);
 
-    Process mapPatcher = new()
-    {
-        StartInfo = new ProcessStartInfo(Path.Combine("MapPatcher", "MapPatcher.exe"), $"\"{map}\" -out \"{outDirMap}\"" + (patchManifest is null ? string.Empty : $" -patch \"{patchManifest}\"")),
-        EnableRaisingEvents = true
-    };
-    mapPatcher.Start();
-    mapPatcher.WaitForExit();
-
-    if (mapPatcher.ExitCode != 0)
+    if (!MapPatcher.Run(map, outDirMap))
     {
         Console.WriteLine("Error in map patcher, aborting.");
         Console.WriteLine("Press ENTER to exit.");
