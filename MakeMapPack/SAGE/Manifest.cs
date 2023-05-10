@@ -213,10 +213,7 @@ internal sealed class Manifest
             data.AssetReferenceBuffer.AddValue(assetReference.TypeId);
             data.AssetReferenceBuffer.AddValue(assetReference.InstanceId);
         }
-        if (asset.SourceManifest != this)
-        {
-            data.InstanceDataSize += asset.InstanceDataSize;
-        }
+        data.InstanceDataSize += asset.InstanceDataSize;
         data.MaxInstanceChunkSize = Math.Max(asset.InstanceDataSize, data.MaxInstanceChunkSize);
         data.MaxRelocationChunkSize = Math.Max(asset.RelocationDataSize, data.MaxRelocationChunkSize);
         data.MaxImportsChunkSize = Math.Max(asset.ImportsDataSize, data.MaxImportsChunkSize);
@@ -234,14 +231,8 @@ internal sealed class Manifest
             RelocationDataSize = asset.RelocationDataSize,
             ImportsDataSize = asset.ImportsDataSize
         };
-        if (asset.SourceManifest == this)
-        {
-            assetEntry.InstanceDataSize = 0;
-            assetEntry.RelocationDataSize = 0;
-            assetEntry.ImportsDataSize = 0;
-        }
         assetEntry.SaveToStream(assetEntryStream, false);
-        if (asset.SourceManifest != this)
+        if (asset.InstanceDataSize > 0)
         {
             asset.Commit(manifestBasePath);
         }
@@ -277,30 +268,27 @@ internal sealed class Manifest
         return true;
     }
 
-    public bool Merge(Manifest other, string? newPath)
+    public bool Merge(Manifest other)
     {
-        string manifestBasePath = Path.Combine(newPath ?? _directory, _name);
-        string versionName = "_leafmod";
-        string patchBasePath = manifestBasePath + versionName;
+        foreach (Asset asset in Assets)
+        {
+            asset.LoadChunk();
+        }
+        string manifestBasePath = Path.Combine(_directory, _name);
         uint checksum = (uint)Random.Shared.NextInt64();
-        if (!Directory.Exists(patchBasePath))
-        {
-            Directory.CreateDirectory(patchBasePath);
-        }
-        File.WriteAllLines(manifestBasePath + ".version", new string[] { versionName });
-        using (Stream stream = new FileStream(patchBasePath + ".bin", FileMode.Create, FileAccess.Write, FileShare.None))
+        using (Stream stream = new FileStream(manifestBasePath + ".bin", FileMode.Create, FileAccess.Write, FileShare.None))
         {
             BinaryWriter writer = new(stream);
             writer.Write(checksum);
             writer.Flush();
         }
-        using (Stream stream = new FileStream(patchBasePath + ".relo", FileMode.Create, FileAccess.Write, FileShare.None))
+        using (Stream stream = new FileStream(manifestBasePath + ".relo", FileMode.Create, FileAccess.Write, FileShare.None))
         {
             BinaryWriter writer = new(stream);
             writer.Write(checksum);
             writer.Flush();
         }
-        using (Stream stream = new FileStream(patchBasePath + ".imp", FileMode.Create, FileAccess.Write, FileShare.None))
+        using (Stream stream = new FileStream(manifestBasePath + ".imp", FileMode.Create, FileAccess.Write, FileShare.None))
         {
             BinaryWriter writer = new(stream);
             writer.Write(checksum);
@@ -336,15 +324,18 @@ internal sealed class Manifest
 
         foreach (Asset asset in assets)
         {
-            MergeAsset(data, asset, assetEntryStream, patchBasePath);
+            MergeAsset(data, asset, assetEntryStream, manifestBasePath);
         }
         byte[] assetBuffer = assetEntryStream.GetBuffer();
-        data.ReferenceManifestBuffer.AddReference(manifestBasePath[manifestBasePath.IndexOf(Path.Combine("maps", "official"), StringComparison.OrdinalIgnoreCase)..] + ".manifest", true);
+        if (_patchManifest is not null)
+        {
+            data.ReferenceManifestBuffer.AddReference(_patchManifest, true);
+        }
         foreach (string referencedManfiest in _externalManifests)
         {
             data.ReferenceManifestBuffer.AddReference(referencedManfiest, false);
         }
-        using Stream fileStream = new FileStream(patchBasePath + ".manifest", FileMode.Create, FileAccess.Write, FileShare.None);
+        using Stream fileStream = new FileStream(manifestBasePath + ".manifest", FileMode.Create, FileAccess.Write, FileShare.None);
         new ManifestHeader
         {
             IsBigEndian = _header.IsBigEndian,

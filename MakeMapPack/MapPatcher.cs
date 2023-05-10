@@ -39,6 +39,6 @@ internal sealed class MapPatcher
         string manifestPath = Path.Combine(outDir, "map.manifest");
         Manifest map = new(manifestPath);
         Manifest patch = new("patch.manifest");
-        return map.Merge(patch, outDir);
+        return map.Merge(patch);
     }
 }

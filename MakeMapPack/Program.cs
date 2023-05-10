@@ -41,7 +41,7 @@ Console.WriteLine("Gathering maps...");
 
 string intDirMaps = Path.Combine(Environment.CurrentDirectory, "int");
 string outDirMaps = Path.Combine("out", "data", "maps", "official");
-string[] baseMapFiles = new[] { "*.map", "*.tga" };
+string[] baseMapFiles = new[] { "*.map", "*.tga", "map.str" };
 string[] mapFiles = new[] { "map.manifest", "map.bin", "map.relo", "map.imp", "*.cdata" };
 
 foreach (string map in Directory.EnumerateDirectories(path))
