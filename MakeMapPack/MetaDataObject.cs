@@ -5,11 +5,13 @@ namespace MakeMapPack;
 internal sealed class MetaDataObject
 {
     public string Id { get; }
+    public string Name { get; }
     public XmlNode Obj { get; }
 
-    public MetaDataObject(string id, XmlDocument document, XmlNode source)
+    public MetaDataObject(string id, string name, XmlDocument document, XmlNode source)
     {
         Id = id;
+        Name = name;
         Obj = source;
     }
 
@@ -20,7 +22,7 @@ internal sealed class MetaDataObject
         id.Value = Id;
         node.Attributes!.Append(id);
         XmlAttribute fileName = node.Attributes["FileName"]!;
-        fileName.Value = $"Data\\maps\\official\\{Id}\\{Id}.map";
+        fileName.Value = $"Data\\maps\\official\\{Name}\\{Name}.map";
         XmlAttribute isOfficial = node.Attributes["IsOfficial"]!;
         isOfficial.Value = "true";
         parent.AppendChild(node);

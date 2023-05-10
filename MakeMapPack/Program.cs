@@ -58,17 +58,16 @@ foreach (string map in Directory.EnumerateDirectories(path))
     node = node["GameMap"]!;
     string id = node.Attributes!["id"]!.Value!;
     node = node["MapMetaData"]!;
-    mapMetaData.MetaData.Add(new MetaDataObject(id, document, node));
+    mapMetaData.MetaData.Add(new MetaDataObject(id, Path.GetFileName(map), document, node));
 
     id = Path.GetFileName(map)!;
 
     Console.WriteLine($"Building and applying leafmod to {id}");
-    string intDirMap = Path.Combine(intDirMaps, id);
     string outDirMap = Path.Combine(outDirMaps, id);
 
     Process mapPatcher = new()
     {
-        StartInfo = new ProcessStartInfo(Path.Combine("MapPatcher", "MapPatcher.exe"), $"\"{map}\" -out \"{intDirMap}\"" + (patchManifest is null ? string.Empty : $" -patch \"{patchManifest}\"")),
+        StartInfo = new ProcessStartInfo(Path.Combine("MapPatcher", "MapPatcher.exe"), $"\"{map}\" -out \"{outDirMap}\"" + (patchManifest is null ? string.Empty : $" -patch \"{patchManifest}\"")),
         EnableRaisingEvents = true
     };
     mapPatcher.Start();
@@ -81,23 +80,11 @@ foreach (string map in Directory.EnumerateDirectories(path))
         Console.ReadLine();
         return -3;
     }
-    if (!Directory.Exists(outDirMap))
-    {
-        Directory.CreateDirectory(outDirMap);
-    }
     foreach (string baseMapFile in baseMapFiles)
     {
         foreach (string file in Directory.GetFiles(map, baseMapFile))
         {
             File.Copy(file, Path.Combine(outDirMap, Path.GetFileName(file)), true);
-        }
-    }
-    foreach (string mapFile in mapFiles)
-    {
-        string intFile = Path.Combine(intDirMap, mapFile);
-        foreach (string file in Directory.GetFiles(intDirMap, mapFile, SearchOption.AllDirectories))
-        {
-            File.Move(file, Path.Combine(outDirMap, Path.GetFileName(file)), true);
         }
     }
 }
@@ -135,7 +122,6 @@ if (File.Exists(metaDataPath))
     File.Delete(metaDataPath);
 }
 
-// TODO: bundle into big
 Process makebig = new()
 {
     StartInfo = new ProcessStartInfo(Path.Combine("MakeBig", "MakeBig.exe"), $"-f \"{Path.Combine(Environment.CurrentDirectory, "out")}\" -o:\"{path}.big\""),
